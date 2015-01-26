@@ -11,6 +11,7 @@
  */
 
 #include "ai_snake.h"
+#include <string.h>
 
 /*#include "Arduino.h"*/
 
@@ -18,7 +19,7 @@ static game_struct_t*   gs;
 static snake_struct_t*  sns;
 
 void snakeReset();
-void drawSnake();
+/*void drawSnake();*/
 
 uint8_t snakeMove(uint8_t turning);
 uint8_t checkCollision(uint16_t point);
@@ -37,11 +38,11 @@ void snakeInit( game_struct_t* gameStruct, snake_struct_t* snakeStruct ){
 
 void snakeReset(){
     /* create an initial snake of length 3 */
-    memset(sns->array, 0xFF, MAX_LENGTH * sizeof(uint16_t));
+    memset(sns->array, 0xFFFF, MAX_LENGTH * sizeof(uint16_t));
 
-    sns->array[0]    = WRAP(5, 5);
-    sns->array[1]    = WRAP(5, 6);
-    sns->array[2]    = WRAP(5, 7);
+    sns->array[0]    = PACK(5, 5);
+    sns->array[1]    = PACK(5, 6);
+    sns->array[2]    = PACK(5, 7);
     sns->length = 3;
 
     sns->direction   = MOVING_UP;
@@ -113,6 +114,9 @@ void drawSnake(){
 
     uint16_t temp_pixel; 
     uint16_t apple;
+
+    /* Clear the Display */
+    gs->clear_function(gs->cookie);
     
     /* Plot the snake's Body */
     for(uint8_t i = 0; i < (sns->length); i++){
@@ -306,10 +310,11 @@ uint8_t snakeMove(uint8_t turning){
             break;
 
         }  /* END: Switch(sns->direction) */
-        
+        Y = WRAP(Y, gs->board_y);
+        X = WRAP(X, gs->board_x);
 
         /* If you're going to hit yourself, try turning in another direction */
-        if(checkCollision(PACK(X, Y)) == 1){        
+        if(checkCollision(PACK(X,Y))){        
             moveOk++;    //add 1 to the try count
 
             /* If you can't turn, try to go straight */

@@ -16,8 +16,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+
 #define WRAP(Z, D)  ( ((Z) < 0) ? 0 : ((Z) > D) ? D : Z)
-#define PACK(X, Y)  ((((X) & 0x00FF) << 8) | ((Y) & 0x00FF))  
+#define PACK(X, Y)  ( ( ((X) << 8)  & 0xFF00) | ((Y) & 0x00FF))  
 #define GET_X( Z )  (((Z) >> 8) & 0x00FF)
 #define GET_Y( Z )  ((Z) & 0x00FF)
 
@@ -74,7 +75,7 @@ typedef struct {
 } game_struct_t;
 
 typedef struct {
-    uint16_t array[MAX_LENGTH];   /* array of coordinates of snake body */
+    uint16_t array[MAX_LENGTH];     /* array of coordinates of snake body */
     snake_directions_t direction;   /* direction the snake is moving*/
     uint16_t length;                /* length of the snake */
     uint16_t apple_pos;             /* masked x,y coordinates of apple */
@@ -82,6 +83,7 @@ typedef struct {
 } snake_struct_t;
 
 void snakeInit( game_struct_t* gameStruct, snake_struct_t* snakeStruct );
+void drawSnake();
 void runFrame();
 
 /*void drawSnake();
