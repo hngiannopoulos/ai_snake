@@ -21,15 +21,36 @@
 #define PACK(X, Y)  ( ( ((X) << 8)  & 0xFF00) | ((Y) & 0x00FF))  
 #define GET_X( Z )  (((Z) >> 8) & 0x00FF)
 #define GET_Y( Z )  ((Z) & 0x00FF)
+#define W_C(X) ((X) != 0) ? (X) : 0xFF
+#define WEIGHT_CHECK( X, Y, Z) ( W_C(X) < W_C(Y) ) \
+                             && ( W_C(X) < W_C(Z) )
 
 #define MAX_LENGTH 75
+#define WRAP_OFF
 
+/*INTRESTING PARAMETER COMBOS*/
+/*MANHATTAN_WEIGHT 1
+TURN_WEIGHT 5
+NO_TURN_WEIGHT 5
+
+default parameter combos
+MANHATTAN_WEIGHT 1
+TURN_WEIGHT 1
+NO_TURN_WEIGHT 1
+*/
+/* Pathfinding parameters */
+/* MUST BE NON-ZERO */
+#define MANHATTAN_WEIGHT    1
+#define TURN_WEIGHT         1
+#define NO_TURN_WEIGHT      5
+
+/* temporary Colors */
 #define SNAKE_COLOR     1
 #define APPLE_COLOR     2
 
-#define turnRight       4 
-#define turnLeft        5
-#define noTurn          6 
+#define TURN_RIGHT       4 
+#define TURN_LEFT        5
+#define NO_TURN          6 
 #define endOfSnake      0xFFFF
 
 typedef enum Buttons {
@@ -60,7 +81,6 @@ typedef int (*plot_point)(void*, uint8_t, uint8_t, uint32_t);
 
 typedef int (*clear_disp)(void* );
 
-
 typedef int (*push_disp)(void* );
 
 typedef struct {
@@ -85,20 +105,5 @@ typedef struct {
 void snakeInit( game_struct_t* gameStruct, snake_struct_t* snakeStruct );
 void drawSnake();
 void runFrame();
-
-/*void drawSnake();
-byte snakeMove(byte turning);
-         
-byte pointToBCD(char x, char y);
-
-uint16_t makeApple(uint8_t x_max, y_max);
-//globals
-
-
-byte snakeDirection;
-byte snakeLength;
-byte apple;
-byte snakeState;
-struct CRGB * disp;*/
 
 #endif
