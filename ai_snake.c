@@ -74,13 +74,10 @@ void runFrame(){
 
 void runAI(){
     uint8_t left_weight = TURN_WEIGHT;
-    //uint16_t left_head;
 
     uint8_t right_weight = TURN_WEIGHT;
-    //uint16_t right_head;
 
     uint8_t straight_weight = NO_TURN_WEIGHT;
-    //uint16_t straight_head;
 
     uint16_t new_head;
     snake_directions_t new_direction;
@@ -187,6 +184,7 @@ void drawSnake(){
                     GET_Y(apple), 
                     sns->apple_color
                     );
+
 }
 
 //
@@ -244,74 +242,33 @@ uint8_t checkCollision(uint16_t point){
 }
 
 uint16_t moveHead(uint16_t head, uint8_t turning, snake_directions_t *final_dir){
-    uint8_t X = GET_X(head);
-    uint8_t Y = GET_Y(head);
-    switch(sns->direction){
-        case(MOVING_UP):   
-                if(turning == NO_TURN){
-                    Y++;
-                    *final_dir = MOVING_UP;
-                }
-                else if(turning ==TURN_RIGHT){
-                    X--;
-                    *final_dir = MOVING_RIGHT;
-                }
-                else if(turning == TURN_LEFT){
-                    X++;
-                    *final_dir = MOVING_LEFT;
-                }
+    uint8_t X             = GET_X(head);
+    uint8_t Y             = GET_Y(head);
+    uint8_t old_direction = sns->direction;
+    uint8_t new_direction = (old_direction + turning) % 4;
+
+    switch(new_direction){
+        case(MOVING_UP):  
+            Y++;  
         break;
 
         case(MOVING_DOWN):   
-                if(turning == NO_TURN){
-                    Y--;
-                    *final_dir = MOVING_DOWN;
-                }
-                if(turning ==TURN_RIGHT){
-                    X++;
-                    *final_dir = MOVING_LEFT;   
-                }
-                if(turning == TURN_LEFT){
-                    X--;
-                    *final_dir   = MOVING_RIGHT;
-                }
+            Y--;
         break;
 
         case(MOVING_LEFT):   
-                if(turning == NO_TURN){
-                    X++;
-                    *final_dir = MOVING_LEFT;
-                }
-                if(turning ==TURN_RIGHT){
-                    Y++;
-                    *final_dir = MOVING_UP;
-                }
-                if(turning == TURN_LEFT){
-                    Y--;
-                    *final_dir = MOVING_DOWN;
-                }
+            X--;
         break;
 
         case(MOVING_RIGHT):
-                if(turning == NO_TURN){
-                    X--;
-                    *final_dir = MOVING_RIGHT;
-                }
-                if(turning ==TURN_RIGHT){
-                    Y--;
-                    *final_dir = MOVING_DOWN;
-
-                }
-                if(turning == TURN_LEFT){
-                    Y++;
-                    *final_dir = MOVING_UP;
-                }
+            X++;
         break;
 
         default:
         /* IF you're not moving do nothing */
         break;
     }  /* END: Switch(direction) */
+    *final_dir = (snake_directions_t) new_direction;
     return PACK(X, Y);
 }
 

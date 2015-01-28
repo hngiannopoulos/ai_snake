@@ -44,13 +44,9 @@ NO_TURN_WEIGHT 1
 #define TURN_WEIGHT         1
 #define NO_TURN_WEIGHT      5
 
-/* temporary Colors */
-#define SNAKE_COLOR     1
-#define APPLE_COLOR     2
-
-#define TURN_RIGHT       4 
-#define TURN_LEFT        5
-#define NO_TURN          6 
+#define TURN_RIGHT       1 
+#define TURN_LEFT        3
+#define NO_TURN          0 
 #define endOfSnake      0xFFFF
 
 typedef enum Buttons {
@@ -64,11 +60,10 @@ typedef enum Buttons {
 } button;
 
 typedef enum directions {
-    NOT_MOVING = 0,
-    MOVING_UP,
-    MOVING_DOWN,
-    MOVING_LEFT,
-    MOVING_RIGHT
+    MOVING_UP    = 0,
+    MOVING_RIGHT = 1,
+    MOVING_DOWN  = 2,
+    MOVING_LEFT  = 3
 } snake_directions_t;
 
 typedef enum states {
