@@ -120,7 +120,7 @@ void runAI(){
 
     /* check to see if you can move straight */
     else if(straight_weight <= left_weight && straight_weight <= right_weight) {
-        // snakeMove(NO_TURN);
+        snakeMove(NO_TURN);
         // Serial.println("Choose Straight");
     }
 
@@ -175,7 +175,7 @@ void drawSnake(){
                         gs->cookie, 
                         GET_X(temp_pixel), 
                         GET_Y(temp_pixel), 
-                        SNAKE_COLOR
+                        sns->snake_color
                         );
     }
 
@@ -185,7 +185,7 @@ void drawSnake(){
                     gs->cookie, 
                     GET_X(apple), 
                     GET_Y(apple), 
-                    APPLE_COLOR
+                    sns->apple_color
                     );
 }
 
@@ -326,140 +326,5 @@ uint8_t manhattanDistance(uint16_t current, uint16_t target ){
     distance = MANHATTAN_WEIGHT * distance;
     return distance;
 }
-
-
-//////////////////
-//OLD FUNCTIONS //
-//////////////////
-
-
-void runFrameOld(){
-
-    uint16_t head              = sns->array[sns->length - 1];
-    
-    snake_states_t snake_state = sns->state;
-    uint8_t gameState          = 0; //1 - if game was lost; 0 - otherwise 
-    snake_directions_t snakeDirection = sns->direction;
-
-    if (snake_state == RESET || snake_state == DEAD){
-        snakeReset();
-    }
-     
-    /* Basic Pathfinding Algorithm */
-    else if (snake_state == LOOKING_FOR_DIRECTION){
-        uint8_t quadrant = determineQuadrant(head, sns->apple_pos);
-
-        if(snakeDirection == MOVING_UP){
-                if((quadrant == 0) || (quadrant == 1)) 
-                    gameState = snakeMove(NO_TURN);
-                else if((quadrant == 2))
-                    gameState = snakeMove(TURN_LEFT);   
-                else if(quadrant == 3)
-                    gameState = snakeMove(TURN_RIGHT); 
-                else if(quadrant == 5)
-                    gameState = snakeMove(TURN_RIGHT); 
-                else if(quadrant == 7)
-                    gameState = snakeMove(TURN_LEFT);
-                else if((quadrant == 6) || (quadrant == 4))
-                    gameState = snakeMove(NO_TURN);
-        }
-
-        else if(snakeDirection == MOVING_DOWN){
-             if((quadrant == 2) || (quadrant == 3)) 
-                    gameState = snakeMove(NO_TURN);
-                else if((quadrant == 0))
-                    gameState = snakeMove(TURN_RIGHT);   
-                else if(quadrant == 1)
-                    gameState = snakeMove(TURN_LEFT); 
-                else if(quadrant == 5)
-                    gameState = snakeMove(TURN_LEFT); 
-                else if(quadrant == 7)
-                    gameState = snakeMove(TURN_RIGHT);
-                else if((quadrant == 6) || (quadrant == 4))
-                    gameState = snakeMove(NO_TURN);
-        }
-
-        else if(snakeDirection == MOVING_LEFT){
-            if((quadrant == 0) || (quadrant == 1)) 
-                gameState = snakeMove(TURN_RIGHT);
-            else if((quadrant == 2) || (quadrant == 3))
-                gameState = snakeMove(TURN_LEFT);   
-            else if(quadrant == 6)
-                gameState = snakeMove(TURN_LEFT); 
-            else if(quadrant == 4)
-                gameState = snakeMove(TURN_RIGHT); 
-            else
-                gameState = snakeMove(NO_TURN);    
-
-        }
-
-        /* snakeDirection == MOVING_RIGHT */
-        else{ 
-            if((quadrant == 0) || (quadrant == 1)) 
-                gameState = snakeMove(TURN_LEFT);
-            else if((quadrant == 2) || (quadrant == 3))
-                gameState = snakeMove(TURN_RIGHT);   
-            else if(quadrant == 6)
-                gameState = snakeMove(TURN_RIGHT); 
-            else if(quadrant == 4)
-                gameState = snakeMove(TURN_LEFT); 
-            else 
-                gameState = snakeMove(NO_TURN);    
-
-        }
-
-    /* Deal with a won or lost game */
-    if((gameState == 1))
-        sns->state = DEAD;
-    else
-        sns->state = LOOKING_FOR_DIRECTION;
-
-    drawSnake();
-
-    }   /* END: LOOKING_FOR_DIRECTION */
-}       /* END : runFrame() */
-
-/* 0 | 1   on lines 4(V), 5
- * 2 | 3   relative to the apple location
- * 
- * */
-uint8_t determineQuadrant(uint16_t packed_head, uint16_t packed_apple){                      
-    uint8_t quadrant = 0;
-    uint8_t headX    = GET_X(packed_head);
-    uint8_t headY    = GET_Y(packed_head);
-    uint8_t appleX   = GET_X(packed_apple);
-    uint8_t appleY   = GET_Y(packed_apple);
-
-    /* Check to see if you actually hit the apple */
-    if((headX == appleX) && (headY == appleY))                     
-        return 8;
-
-    /* Check to see if you've hit a vertical */
-    /* Then determine if you are above or below the apple */
-    if(headX == appleX) 
-        return (appleY > headY) ? 4 : 6;
-
-    /* Check to see if you've hit a horizontal */
-    /* Then determine if you are to the left or right of the apple */
-    if(headY == appleY)                    
-        return (appleX > headX) ? 7 : 5;
-
-    /* Determine regular quadrant */
-    /* If You're bellow the apple... */
-    if(headY > appleY)          
-        quadrant += 2;  
-    /* If you're to the right of the apple */        
-    if(headX > appleX)          
-        quadrant += 1;  
-
-    return quadrant;
-}
-
-
-
-
-
-
-
 
 

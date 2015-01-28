@@ -99,6 +99,8 @@ typedef struct {
     snake_directions_t direction;   /* direction the snake is moving*/
     uint16_t length;                /* length of the snake */
     uint16_t apple_pos;             /* masked x,y coordinates of apple */
+    uint32_t apple_color;
+    uint32_t snake_color;
     snake_states_t state;           /* State, can be written and read*/
 } snake_struct_t;
 
