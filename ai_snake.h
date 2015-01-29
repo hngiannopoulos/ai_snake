@@ -28,7 +28,7 @@
 #define STATISTICS_ON
 
 #ifdef STATISTICS_ON                             
-#define MAX_LENGTH 75
+#define MAX_LENGTH 120
 #else
 #define MAX_LENGTH 300
 #endif
@@ -93,8 +93,8 @@ typedef struct {
     clear_disp      clear_function;     /* function to clear display */
     push_disp       push_function;      /* function to draw buffer */
     void *          cookie;             /* this gets passed to each funct */
-    uint16_t        board_x;            /* board y dimension */
-    uint16_t        board_y;            /* board x dimension */
+    uint8_t        board_x;            /* board y dimension */
+    uint8_t        board_y;            /* board x dimension */
     uint32_t        color_depth;        /* Bits i.e. 2-Bicolor, 24-RGB */
     uint8_t         single_player;      /* PLACEHOLDER - NOT USED*/ 
 
@@ -106,7 +106,7 @@ typedef struct {
 } game_struct_t;
 
 typedef struct {
-    uint16_t array[MAX_LENGTH];     /* array of coordinates of snake body */
+    uint16_t array[MAX_LENGTH+1];     /* array of coordinates of snake body */
     snake_directions_t direction;   /* direction the snake is moving*/
     uint16_t length;                /* length of the snake */
     uint16_t apple_pos;             /* masked x,y coordinates of apple */

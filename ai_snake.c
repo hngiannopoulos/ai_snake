@@ -71,7 +71,7 @@ void runFrame(){
         break;
 
         case LOOKING_FOR_DIRECTION:
-            if(sns->length >= MAX_LENGTH ){
+            if(sns->length >= MAX_LENGTH - 1 ){
                 sns->state = WON;
             }
             runAI();
@@ -124,7 +124,7 @@ void runAI(){
     // Serial.print("LW: "); Serial.println(left_weight);
 
     /*If There are no moves to make*/
-    if(left_weight == 0xFF && right_weight == 0xFF && straight_weight == 0xFF){
+    if(left_weight == 0xFFFF && right_weight == 0xFFFF && straight_weight == 0xFFFF){
         sns->state = DEAD;
         // Serial.println("Snake Dies");
     }
