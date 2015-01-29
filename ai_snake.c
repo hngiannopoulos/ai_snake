@@ -27,6 +27,7 @@ uint8_t checkCollision(uint16_t point);
 uint8_t manhattanDistance(uint16_t current, uint16_t target );
 uint8_t determineQuadrant(uint16_t packed_head, uint16_t packed_apple);
 
+uint16_t lookAhead(uint8_t turning);
 uint16_t makeApple();
 uint16_t moveHead(uint16_t head, uint8_t turning, snake_directions_t *final_dir);
 
@@ -52,6 +53,9 @@ void snakeReset(){
 
     /* create a new apple */
     sns->apple_pos = makeApple();
+#ifdef STATISTICS_ON
+        sns->apple_count = 0;
+#endif
 }
 
 void runFrame(){
@@ -67,17 +71,24 @@ void runFrame(){
         break;
 
         case LOOKING_FOR_DIRECTION:
+            if(sns->length >= MAX_LENGTH ){
+                sns->state = WON;
+            }
             runAI();
+        break;
+
+        case WON:
+            sns->state = RESET;
         break;
     }
 }
 
 void runAI(){
-    uint8_t left_weight = TURN_WEIGHT;
+    uint16_t left_weight = gs->turn_weight;
 
-    uint8_t right_weight = TURN_WEIGHT;
+    uint16_t right_weight = gs->turn_weight;
 
-    uint8_t straight_weight = NO_TURN_WEIGHT;
+    uint16_t straight_weight = gs->no_turn_weight;
 
     uint16_t new_head;
     snake_directions_t new_direction;
@@ -88,24 +99,27 @@ void runAI(){
     /* Test going straight */
     new_head = moveHead(old_head, NO_TURN, &new_direction);
     straight_weight += manhattanDistance(new_head, sns->apple_pos);
-    straight_weight = straight_weight * checkCollision(new_head);
+    straight_weight += lookAhead(NO_TURN);
 
+    straight_weight = straight_weight * checkCollision(new_head);
     straight_weight = W_C(straight_weight);
     // Serial.print("SW: "); Serial.println(straight_weight);
 
     /* Test Turning Right */
     new_head = moveHead(old_head, TURN_RIGHT, &new_direction);
     right_weight += manhattanDistance(new_head, sns->apple_pos);
-    right_weight = right_weight * checkCollision(new_head);
+    right_weight += lookAhead(TURN_RIGHT);
 
+    right_weight = right_weight * checkCollision(new_head);
     right_weight = W_C(right_weight);
     // Serial.print("RW: "); Serial.println(right_weight);
 
     /* Test Turning Left */
     new_head = moveHead(old_head, TURN_LEFT, &new_direction);
     left_weight += manhattanDistance(new_head, sns->apple_pos);
-    left_weight = left_weight * checkCollision(new_head);
+    left_weight += lookAhead(TURN_LEFT);
 
+    left_weight = left_weight * checkCollision(new_head);
     left_weight = W_C(left_weight);
     // Serial.print("LW: "); Serial.println(left_weight);
 
@@ -217,7 +231,10 @@ uint8_t snakeMove(uint8_t turning){
     /* Increment the length of the snake and make new apple */ 
     else{                                                              
         sns->length++;                                                
-        sns->apple_pos = makeApple();                                       
+        sns->apple_pos = makeApple();  
+#ifdef STATISTICS_ON
+        sns->apple_count++;
+#endif                                     
     }
     return returnVal;
 }
@@ -232,9 +249,9 @@ uint8_t checkCollision(uint16_t point){
     for(uint16_t i = 0; i < (sns->length); i++){
         if(point == sns->array[i])
             return 0;
-        if( GET_X(point) >= gs->board_x)
+        if( GET_X(point) > gs->board_x)
             return 0; 
-        if( GET_Y(point) >= gs->board_y)
+        if( GET_Y(point) > gs->board_y)
             return 0; 
 
     }
@@ -280,8 +297,79 @@ uint8_t manhattanDistance(uint16_t current, uint16_t target ){
     uint8_t targetX  = GET_X(target);
 
     distance = (abs(currentX - targetX) + abs(currentY - targetY));
-    distance = MANHATTAN_WEIGHT * distance;
+    distance = gs->manhattan_weight * distance;
     return distance;
 }
 
+uint16_t lookAhead(uint8_t turning){
+    uint8_t X1, Y1;     /* X1 and Y1 are above */
+    uint8_t X2, Y2;     /* X2 and Y2 are bellow*/
+    uint16_t clear_count = 0;
+    uint16_t temp_point1, temp_point2;
 
+    /* TODO: Optimize this code */
+    uint8_t direction = (sns->direction + turning) % 4;
+    for(uint8_t i = 0; i <= LOOK_AHEAD_DISTANCE; i++){
+        for(uint8_t j = 0; j <= (LOOK_AHEAD_DISTANCE - i); j++){
+            X1 = GET_X(sns->array[sns->length]);
+            Y1 = GET_Y(sns->array[sns->length]);
+            X2 = X1;
+            Y2 = X1;
+
+            /*Figure out where points should be*/
+            switch(direction){
+                case MOVING_RIGHT:
+                    X1 += i;
+                    X2 += i;
+
+                    Y1 += j;
+                    Y2 -= j;
+                break;
+
+                case MOVING_LEFT:
+                    X1 -= i;
+                    X2 -= i;
+                  
+                    Y1 += j;
+                    Y2 -= j;
+
+                break;
+
+                case MOVING_UP:
+                    Y1 += i;
+                    Y2 += i;
+                    
+                    X1 += j;
+                    X2 -= j;
+
+                break;
+
+                case MOVING_DOWN:
+                    Y1 -= i;
+                    Y2 -= i;
+                    
+                    X1 += j;
+                    X2 -= j;
+                break;
+
+                default:
+                    /* You Should never get here */
+                break;
+
+            } /* END : switch(Direction) */
+
+            /* Check to see if there is a collison at point 1 */
+            temp_point1  = PACK(X1, Y1);
+            clear_count += (checkCollision(temp_point1)) ? 0 : gs->look_ahead_weight;
+
+            /* Check to see if there is a collison on point 2 */
+            temp_point2 = PACK(X2, Y2);
+            clear_count += (checkCollision(temp_point2)) ? 0 : gs->look_ahead_weight;
+
+            /*There higher clear count is, the fewer moves can be */
+            /* Made from the point */
+
+        }   /* END: for(j) */
+    }       /* END; for(i) */
+    return clear_count;
+}           /* END: lookAhead(uint8_t turning) */

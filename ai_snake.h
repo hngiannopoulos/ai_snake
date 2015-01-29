@@ -21,12 +21,19 @@
 #define PACK(X, Y)  ( ( ((X) << 8)  & 0xFF00) | ((Y) & 0x00FF))  
 #define GET_X( Z )  (((Z) >> 8) & 0x00FF)
 #define GET_Y( Z )  ((Z) & 0x00FF)
-#define W_C(X) ((X) != 0) ? (X) : 0xFF
+#define W_C(X) ((X) != 0) ? (X) : 0xFFFF
 #define WEIGHT_CHECK( X, Y, Z) ( W_C(X) < W_C(Y) ) \
                              && ( W_C(X) < W_C(Z) )
 
+#define STATISTICS_ON
+
+#ifdef STATISTICS_ON                             
 #define MAX_LENGTH 75
+#else
+#define MAX_LENGTH 300
+#endif
 #define WRAP_OFF
+
 
 /*INTRESTING PARAMETER COMBOS*/
 /*MANHATTAN_WEIGHT 1
@@ -43,6 +50,8 @@ NO_TURN_WEIGHT 1
 #define MANHATTAN_WEIGHT    1
 #define TURN_WEIGHT         1
 #define NO_TURN_WEIGHT      5
+#define LOOK_AHEAD_DISTANCE 2
+#define LOOK_AHEAD_WEIGHT   4
 
 #define TURN_RIGHT       1 
 #define TURN_LEFT        3
@@ -69,7 +78,8 @@ typedef enum directions {
 typedef enum states {
     RESET = 1,
     LOOKING_FOR_DIRECTION,
-    DEAD
+    DEAD, 
+    WON
 } snake_states_t;
 
 typedef int (*plot_point)(void*, uint8_t, uint8_t, uint32_t);
@@ -86,7 +96,13 @@ typedef struct {
     uint16_t        board_x;            /* board y dimension */
     uint16_t        board_y;            /* board x dimension */
     uint32_t        color_depth;        /* Bits i.e. 2-Bicolor, 24-RGB */
-    uint8_t         single_player;      /* PLACEHOLDER - NOT USED*/
+    uint8_t         single_player;      /* PLACEHOLDER - NOT USED*/ 
+
+    uint8_t         manhattan_weight;
+    uint8_t         turn_weight;
+    uint8_t         no_turn_weight;
+    uint8_t         look_ahead_distance;
+    uint8_t         look_ahead_weight;
 } game_struct_t;
 
 typedef struct {
@@ -97,6 +113,9 @@ typedef struct {
     uint32_t apple_color;
     uint32_t snake_color;
     snake_states_t state;           /* State, can be written and read*/
+#ifdef STATISTICS_ON
+    uint32_t    apple_count;   
+#endif 
 } snake_struct_t;
 
 void snakeInit( game_struct_t* gameStruct, snake_struct_t* snakeStruct );
