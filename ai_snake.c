@@ -26,6 +26,8 @@ uint8_t snakeMove(uint8_t turning);
 uint8_t checkCollision(uint16_t point);
 uint8_t manhattanDistance(uint16_t current, uint16_t target );
 uint8_t determineQuadrant(uint16_t packed_head, uint16_t packed_apple);
+uint8_t lowest_weight(uint16_t straight, uint16_t right, uint16_t left );
+uint8_t checkOptimalPath(uint16_t head, snake_directions_t dir, uint16_t apple);
 
 uint16_t lookAhead(uint8_t turning);
 uint16_t makeApple();
@@ -91,61 +93,68 @@ void runAI(){
     uint16_t straight_weight = gs->no_turn_weight;
 
     uint16_t new_head;
+    uint8_t best_move;
     snake_directions_t new_direction;
 
     uint16_t old_head = sns->array[sns->length - 1 ];
 
-    //Serial.println("\n ROUND: ");
     /* Test going straight */
     new_head = moveHead(old_head, NO_TURN, &new_direction);
     straight_weight += manhattanDistance(new_head, sns->apple_pos);
     straight_weight += lookAhead(NO_TURN);
-
     straight_weight = straight_weight * checkCollision(new_head);
-    straight_weight = W_C(straight_weight);
-    // Serial.print("SW: "); Serial.println(straight_weight);
+
+    //straight_weight = W_C(straight_weight);
 
     /* Test Turning Right */
     new_head = moveHead(old_head, TURN_RIGHT, &new_direction);
     right_weight += manhattanDistance(new_head, sns->apple_pos);
     right_weight += lookAhead(TURN_RIGHT);
-
     right_weight = right_weight * checkCollision(new_head);
-    right_weight = W_C(right_weight);
-    // Serial.print("RW: "); Serial.println(right_weight);
+
+    // right_weight = W_C(right_weight);
 
     /* Test Turning Left */
     new_head = moveHead(old_head, TURN_LEFT, &new_direction);
     left_weight += manhattanDistance(new_head, sns->apple_pos);
     left_weight += lookAhead(TURN_LEFT);
-
     left_weight = left_weight * checkCollision(new_head);
-    left_weight = W_C(left_weight);
-    // Serial.print("LW: "); Serial.println(left_weight);
 
-    /*If There are no moves to make*/
-    if(left_weight == 0xFFFF && right_weight == 0xFFFF && straight_weight == 0xFFFF){
+    // left_weight = W_C(left_weight);
+
+    best_move = lowest_weight(straight_weight,
+                            right_weight,
+                            left_weight
+                            );
+
+    if(best_move == TURN_ERROR)
         sns->state = DEAD;
-        // Serial.println("Snake Dies");
-    }
+    else 
+        snakeMove(best_move);
 
-    /* check to see if you can move straight */
-    else if(straight_weight <= left_weight && straight_weight <= right_weight) {
-        snakeMove(NO_TURN);
-        // Serial.println("Choose Straight");
-    }
+    // /*If There are no moves to make*/
+    // if(left_weight == 0xFFFF && right_weight == 0xFFFF && straight_weight == 0xFFFF){
+    //     sns->state = DEAD;
+    //     // Serial.println("Snake Dies");
+    // }
 
-    /* Check to see if you can turn left */
-    else if(left_weight <= straight_weight && left_weight <= right_weight){
-        snakeMove(TURN_LEFT);
-        // Serial.println("Choose LEFT");
-    }
+    // /* check to see if you can move straight */
+    // else if(straight_weight <= left_weight && straight_weight <= right_weight) {
+    //     snakeMove(NO_TURN);
+    //     // Serial.println("Choose Straight");
+    // }
 
-    else {
-        snakeMove(TURN_RIGHT);
-        // Serial.println("Choose RIGHT");
-    }
-    /* TODO: Finish Here */
+    // /* Check to see if you can turn left */
+    // else if(left_weight <= straight_weight && left_weight <= right_weight){
+    //     snakeMove(TURN_LEFT);
+    //     // Serial.println("Choose LEFT");
+    // }
+
+    // else {
+    //     snakeMove(TURN_RIGHT);
+    //     // Serial.println("Choose RIGHT");
+    // }
+    // /* TODO: Finish Here */
 
 
 }
@@ -311,8 +320,8 @@ uint16_t lookAhead(uint8_t turning){
     uint8_t direction = (sns->direction + turning) % 4;
     for(uint8_t i = 0; i <= LOOK_AHEAD_DISTANCE; i++){
         for(uint8_t j = 0; j <= (LOOK_AHEAD_DISTANCE - i); j++){
-            X1 = GET_X(sns->array[sns->length]);
-            Y1 = GET_Y(sns->array[sns->length]);
+            X1 = GET_X(sns->array[sns->length - 1]);
+            Y1 = GET_Y(sns->array[sns->length - 1]);
             X2 = X1;
             Y2 = X1;
 
@@ -373,3 +382,68 @@ uint16_t lookAhead(uint8_t turning){
     }       /* END; for(i) */
     return clear_count;
 }           /* END: lookAhead(uint8_t turning) */
+
+
+/* Returns 1 if the optimal path is reachable */
+uint8_t checkOptimalPath(uint16_t head, snake_directions_t dir, uint16_t apple){
+    uint16_t straight_weight;
+    uint16_t left_weight;
+    uint16_t right_weight;
+    uint16_t temp_head;
+    uint8_t best_move;
+
+    /* keep running until you hit the apple */
+    while(manhattanDistance(head, apple)){
+
+        /* Check Straight */
+        temp_head = moveHead(head, NO_TURN, NULL);
+        straight_weight = manhattanDistance(temp_head, apple);
+
+        /* Check Turn Right */
+        temp_head = moveHead(head, TURN_RIGHT, NULL);
+        right_weight = manhattanDistance(temp_head, apple);
+
+        /* Check Turn Left */
+        temp_head = moveHead(head, TURN_LEFT, NULL);
+        left_weight = manhattanDistance(temp_head, apple);
+
+        /* Process Weights and determine best direction */ 
+        best_move = lowest_weight(straight_weight,
+                                right_weight,
+                                left_weight);
+
+        head = moveHead(head, best_move,  &dir);
+        
+        /* If there was a collision return 0 */
+        if(!checkCollision(head))
+            return 0;
+    }
+    return 1;
+}
+
+/* Any weight of 0 is invalid */
+uint8_t lowest_weight(uint16_t straight, uint16_t right, uint16_t left ){
+    
+    straight = W_C(straight);
+    right    = W_C(right);
+    left     = W_C(left);
+
+    /*If There are no moves to make*/
+    if(straight == 0xFFFF && right == 0xFFFF && left == 0xFFFF){
+        return TURN_ERROR;
+    }
+
+    /* check to see if you can move straight */
+    else if(straight <= left && straight <= right) {
+        return NO_TURN;
+    }
+
+    /* Check to see if you can turn left */
+    else if(left <= straight && left <= right){
+        return TURN_LEFT;
+    }
+
+    else {
+        return TURN_RIGHT;
+    }
+}

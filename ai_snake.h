@@ -28,9 +28,9 @@
 #define STATISTICS_ON
 
 #ifdef STATISTICS_ON                             
-#define MAX_LENGTH 120
-#else
 #define MAX_LENGTH 300
+#else
+#define MAX_LENGTH 120
 #endif
 #define WRAP_OFF
 
@@ -56,6 +56,8 @@ NO_TURN_WEIGHT 1
 #define TURN_RIGHT       1 
 #define TURN_LEFT        3
 #define NO_TURN          0 
+#define TURN_ERROR       4
+
 #define endOfSnake      0xFFFF
 
 typedef enum Buttons {
