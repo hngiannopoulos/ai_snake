@@ -318,8 +318,8 @@ uint16_t lookAhead(uint8_t turning){
 
     /* TODO: Optimize this code */
     uint8_t direction = (sns->direction + turning) % 4;
-    for(uint8_t i = 0; i <= LOOK_AHEAD_DISTANCE; i++){
-        for(uint8_t j = 0; j <= (LOOK_AHEAD_DISTANCE - i); j++){
+    for(uint8_t i = 0; i <= gs->look_ahead_distance; i++){
+        for(uint8_t j = 0; j <= (gs->look_ahead_distance - i); j++){
             X1 = GET_X(sns->array[sns->length - 1]);
             Y1 = GET_Y(sns->array[sns->length - 1]);
             X2 = X1;

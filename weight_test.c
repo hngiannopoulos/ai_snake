@@ -3,6 +3,7 @@
 */
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include "ai_snake.h"
 
 #define RUN_MAX 10000
@@ -55,6 +56,9 @@ int main(){
     snakeStruct.snake_color = 1;
     snakeStruct.apple_color = 2;
 
+    /* Write the header for the .csv file */
+    printf("manhattan_weight, turn_weight, no_turn_weight, look_ahead_distance, \
+        look_ahead_weight, win_count, loose_count, apple_count \n");
     for(unsigned int manhattan_weight = 1; manhattan_weight < WEIGHT_RANGE; manhattan_weight++){
         for(unsigned int turn_weight = 1; turn_weight < WEIGHT_RANGE; turn_weight++){
             for(unsigned int no_turn_weight = 1; no_turn_weight < WEIGHT_RANGE; no_turn_weight++){
@@ -86,16 +90,19 @@ int main(){
                                 //sprintf("LOST: %d Apples Retreived", (int)snakeStruct.apple_count);
                             }
                         }
-                        printf("%u,  %u, %u, %u, %u, %u, %u, %u \n", 
-                            manhattan_weight,
-                            turn_weight,
-                            no_turn_weight,
-                            look_ahead_distance,
-                            look_ahead_weight,
-                            win_count,
-                            loose_count,
-                            apple_count
-                            );
+
+                        if(apple_count != 0){
+                            printf("%u,  %u, %u, %u, %u, %u, %u, %u \n", 
+                                manhattan_weight,
+                                turn_weight,
+                                no_turn_weight,
+                                look_ahead_distance,
+                                look_ahead_weight,
+                                win_count,
+                                loose_count,
+                                apple_count
+                                );
+                        }
                     }
                 }
             }
@@ -112,5 +119,15 @@ int ht1632c_clear(void* cookie){
     return 1;
 } 
 int ht1632c_push(void * cookie){
+    return 1;
+}
+
+int snake_print(void * cookie, char *str, const char *format, ...){
+    va_list argptr;
+    va_start(argptr, format);
+
+    printf(format, argptr);
+
+    va_end(argptr);
     return 1;
 }

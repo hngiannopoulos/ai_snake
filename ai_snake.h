@@ -35,23 +35,9 @@
 #define WRAP_OFF
 
 
-/*INTRESTING PARAMETER COMBOS*/
-/*MANHATTAN_WEIGHT 1
-TURN_WEIGHT 5
-NO_TURN_WEIGHT 5
-
-default parameter combos
-MANHATTAN_WEIGHT 1
-TURN_WEIGHT 1
-NO_TURN_WEIGHT 1
-*/
-/* Pathfinding parameters */
-/* MUST BE NON-ZERO */
-#define MANHATTAN_WEIGHT    1
-#define TURN_WEIGHT         1
-#define NO_TURN_WEIGHT      5
-#define LOOK_AHEAD_DISTANCE 2
-#define LOOK_AHEAD_WEIGHT   4
+/*The maximum length of the print buffer*/
+/* For the diagnostic messages */
+#define SPRINTF_BUFF_LEN 80
 
 #define TURN_RIGHT       1 
 #define TURN_LEFT        3
@@ -90,13 +76,16 @@ typedef int (*clear_disp)(void* );
 
 typedef int (*push_disp)(void* );
 
+typedef int (*print_funct)(void *, char *, const char *, ...);
+
 typedef struct {
     plot_point      plot_function;      /* function to plot a point */
     clear_disp      clear_function;     /* function to clear display */
     push_disp       push_function;      /* function to draw buffer */
+    print_funct     print_function;     /* Function that prints message*/
     void *          cookie;             /* this gets passed to each funct */
-    uint8_t        board_x;            /* board y dimension */
-    uint8_t        board_y;            /* board x dimension */
+    uint8_t        board_x;             /* board y dimension */
+    uint8_t        board_y;             /* board x dimension */
     uint32_t        color_depth;        /* Bits i.e. 2-Bicolor, 24-RGB */
     uint8_t         single_player;      /* PLACEHOLDER - NOT USED*/ 
 
