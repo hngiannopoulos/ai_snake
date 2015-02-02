@@ -76,7 +76,7 @@ typedef int (*clear_disp)(void* );
 
 typedef int (*push_disp)(void* );
 
-typedef int (*print_funct)(void *, char *, const char *, ...);
+typedef int (*print_funct)(void *, const char *, ...);
 
 typedef struct {
     plot_point      plot_function;      /* function to plot a point */
@@ -97,7 +97,7 @@ typedef struct {
 } game_struct_t;
 
 typedef struct {
-    uint16_t array[MAX_LENGTH+1];     /* array of coordinates of snake body */
+    uint16_t array[MAX_LENGTH+1];   /* array of coordinates of snake body */
     snake_directions_t direction;   /* direction the snake is moving*/
     uint16_t length;                /* length of the snake */
     uint16_t apple_pos;             /* masked x,y coordinates of apple */
