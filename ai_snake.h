@@ -27,6 +27,10 @@
 
 #define STATISTICS_ON
 
+
+#define OBSTACLES_ON
+#define OBSTACLE_LEN 10
+
 #ifdef STATISTICS_ON                             
 #define MAX_LENGTH 300
 #else
@@ -78,6 +82,9 @@ typedef int (*push_disp)(void* );
 
 typedef int (*print_funct)(void *, const char *, ...);
 
+
+
+
 typedef struct {
 
     /* Pointers to function pointers */
@@ -98,6 +105,10 @@ typedef struct {
     uint8_t         no_turn_weight;
     uint8_t         look_ahead_distance;
     uint8_t         look_ahead_weight;
+
+#ifdef OBSTACLES_ON
+    uint16_t        obstacle_list[OBSTACLE_LEN];
+#endif
 } game_struct_t;
 
 typedef struct {
@@ -113,10 +124,13 @@ typedef struct {
     uint32_t apple_count;           /* Number of apples the snake caught */
     uint32_t apple_color;           /* Color of the apple, passed to plot*/
     uint32_t snake_color;           /* color of the snake, passed to plot */
+#ifdef OBSTACLES_ON
+    uint32_t obstacle_color;
+#endif
 
     /* Cookie and pointer go game_struct_t */
     void *          cookie;     /* this gets passed to each funct */
-    game_struct_t*  gs;         /* Pointer back to the snake's game_struct_t*/
+    game_struct_t *  gs;         /* Pointer back to the snake's game_struct_t*/
     
 } snake_struct_t;
 
@@ -124,4 +138,8 @@ void snakeInit( game_struct_t* gs, snake_struct_t* sns );
 void drawSnake(snake_struct_t * sns);
 void runFrame(snake_struct_t * sns);
 
+uint16_t look_ahead(snake_struct_t * sns, 
+                    uint16_t head, 
+                    snake_directions_t dir, 
+                    uint8_t turning);
 #endif

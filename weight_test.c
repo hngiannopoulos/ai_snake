@@ -43,11 +43,11 @@ int main(){
     gameStruct.board_y        = 15;
     gameStruct.color_depth    = 2;
     
-    snakeStruct.cookie         = NULL;
+    snakeStruct.cookie         = &gameStruct;
     gameStruct.manhattan_weight    = 1;
     gameStruct.turn_weight         = 1;
     gameStruct.no_turn_weight      = 1;
-    gameStruct.look_ahead_distance = 1;
+    gameStruct.look_ahead_distance = 4;
     gameStruct.look_ahead_weight   = 1;
 
 
@@ -55,59 +55,71 @@ int main(){
     
     snakeStruct.snake_color = 1;
     snakeStruct.apple_color = 2;
+#ifdef OBSTACLES_ON
+    snakeStruct.obstacle_color = 3;
+#endif
 
-    /* Write the header for the .csv file */
-    printf("manhattan_weight, turn_weight, no_turn_weight, look_ahead_distance, \
-        look_ahead_weight, win_count, loose_count, apple_count \n");
-    for(unsigned int manhattan_weight = 1; manhattan_weight < WEIGHT_RANGE; manhattan_weight++){
-        for(unsigned int turn_weight = 1; turn_weight < WEIGHT_RANGE; turn_weight++){
-            for(unsigned int no_turn_weight = 1; no_turn_weight < WEIGHT_RANGE; no_turn_weight++){
-                for(unsigned int look_ahead_distance = 1; look_ahead_distance < WEIGHT_RANGE; look_ahead_distance++){
-                    for(unsigned int look_ahead_weight = 1; look_ahead_weight < WEIGHT_RANGE; look_ahead_weight++){
+    uint16_t look_ahead_cnt = look_ahead(&snakeStruct,
+                                    snakeStruct.array[snakeStruct.length -1],
+                                    MOVING_RIGHT,
+                                    NO_TURN );
 
-                        win_count   = 0;
-                        loose_count = 0;
+    printf("Look Ahead: Straight: %u \n", look_ahead_cnt);
 
-                        apple_count = 0;
 
-                        gameStruct.manhattan_weight    = manhattan_weight;
-                        gameStruct.turn_weight         = turn_weight;
-                        gameStruct.no_turn_weight      = no_turn_weight;
-                        gameStruct.look_ahead_distance = look_ahead_distance;
-                        gameStruct.look_ahead_weight   = look_ahead_weight;
 
-                        /* Try the parameters RUN_MAX Times */
-                        for(uint32_t frame = 0; frame < RUN_MAX; frame++){
-                            runFrame(&snakeStruct);
-                            if(snakeStruct.state == WON){
-                                win_count++;
-                                apple_count += snakeStruct.apple_count;
-                                //sprintf("WON: %d Apples Retrieved", (int)snakeStruct.apple_count);
-                            }
-                            else if(snakeStruct.state == DEAD){
-                                loose_count++;
-                                apple_count += snakeStruct.apple_count;
-                                //sprintf("LOST: %d Apples Retreived", (int)snakeStruct.apple_count);
-                            }
-                        }
+    // /* Write the header for the .csv file */
+    // printf("manhattan_weight, turn_weight, no_turn_weight, look_ahead_distance, \
+    //     look_ahead_weight, win_count, loose_count, apple_count \n");
+    // for(unsigned int manhattan_weight = 1; manhattan_weight < WEIGHT_RANGE; manhattan_weight++){
+    //     for(unsigned int turn_weight = 1; turn_weight < WEIGHT_RANGE; turn_weight++){
+    //         for(unsigned int no_turn_weight = 1; no_turn_weight < WEIGHT_RANGE; no_turn_weight++){
+    //             for(unsigned int look_ahead_distance = 1; look_ahead_distance < WEIGHT_RANGE; look_ahead_distance++){
+    //                 for(unsigned int look_ahead_weight = 1; look_ahead_weight < WEIGHT_RANGE; look_ahead_weight++){
 
-                        if(apple_count != 0){
-                            printf("%u,  %u, %u, %u, %u, %u, %u, %u \n", 
-                                manhattan_weight,
-                                turn_weight,
-                                no_turn_weight,
-                                look_ahead_distance,
-                                look_ahead_weight,
-                                win_count,
-                                loose_count,
-                                apple_count
-                                );
-                        }
-                    }
-                }
-            }
-        }
-    }
+    //                     win_count   = 0;
+    //                     loose_count = 0;
+
+    //                     apple_count = 0;
+
+    //                     gameStruct.manhattan_weight    = manhattan_weight;
+    //                     gameStruct.turn_weight         = turn_weight;
+    //                     gameStruct.no_turn_weight      = no_turn_weight;
+    //                     gameStruct.look_ahead_distance = look_ahead_distance;
+    //                     gameStruct.look_ahead_weight   = look_ahead_weight;
+
+    //                     /* Try the parameters RUN_MAX Times */
+    //                     for(uint32_t frame = 0; frame < RUN_MAX; frame++){
+    //                         runFrame(&snakeStruct);
+    //                         if(snakeStruct.state == WON){
+    //                             win_count++;
+    //                             apple_count += snakeStruct.apple_count;
+    //                             //sprintf("WON: %d Apples Retrieved", (int)snakeStruct.apple_count);
+    //                         }
+    //                         else if(snakeStruct.state == DEAD){
+    //                             loose_count++;
+    //                             apple_count += snakeStruct.apple_count;
+    //                             //sprintf("LOST: %d Apples Retreived", (int)snakeStruct.apple_count);
+    //                         }
+    //                     }
+
+    //                     if(apple_count != 0){
+    //                         printf("%u,  %u, %u, %u, %u, %u, %u, %u \n", 
+    //                             manhattan_weight,
+    //                             turn_weight,
+    //                             no_turn_weight,
+    //                             look_ahead_distance,
+    //                             look_ahead_weight,
+    //                             win_count,
+    //                             loose_count,
+    //                             apple_count
+    //                             );
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
 }
 

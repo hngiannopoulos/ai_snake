@@ -15,24 +15,33 @@
 
 // #include "Arduino.h"
 
-static game_struct_t*   gs;
+// static game_struct_t*   gs;
 // static snake_struct_t*  sns;
+// 
+/* TODO: Make apples spawn a certian distance form the wall*/
 
 void _snake_reset(snake_struct_t* sns);
 void _run_ai(snake_struct_t* sns);
 /*void drawSnake();*/
 
-uint8_t _snake_move(snake_struct_t * sns, uint8_t turning);
-uint8_t _check_collision(snake_struct_t * sns, uint16_t point);
-uint8_t _manhattan_dist(uint16_t current, uint16_t target );
+uint8_t snake_move(snake_struct_t * sns, uint8_t turning);
+uint8_t check_collision(snake_struct_t * sns, uint16_t point);
+uint8_t _manhattan_dist(uint16_t current, 
+                        uint16_t target, 
+                        uint8_t weight);
+
 uint8_t _lowest_weight(uint16_t straight, uint16_t right, uint16_t left );
-uint8_t _check_optimal_path(snake_struct_t* sns,
+uint8_t check_optimal_path(snake_struct_t* sns,
                             uint16_t head, 
                             snake_directions_t start_dir, 
-                            uint16_t apple);
+                            uint16_t target);
 
-uint16_t _look_ahead(snake_struct_t * sns, uint16_t head, snake_directions_t dir, uint8_t turning);
-void _make_apple(snake_struct_t * sns);
+// uint16_t look_ahead(snake_struct_t * sns, 
+//                     uint16_t head, 
+//                     snake_directions_t dir, 
+//                     uint8_t turning);
+
+void make_apple(snake_struct_t * sns);
 uint16_t _move_head(uint16_t head, 
                     uint8_t turning, 
                     snake_directions_t start_dir,
@@ -44,6 +53,14 @@ snake_directions_t _turn_direction(uint8_t turning,
 void snakeInit( game_struct_t* gs, snake_struct_t* sns ){
     /* assign inputs to static global pointers */
     sns->gs = gs;
+
+#ifdef OBSTACLES_ON
+    /* Generate the obstacles */
+    memset(gs->obstacle_list, 0xFFFF, OBSTACLE_LEN * sizeof(uint16_t));
+    gs->obstacle_list[0] = PACK(3, 8);
+    gs->obstacle_list[1] = PACK(4, 8);
+    gs->obstacle_list[2] = PACK(3, 7);
+#endif
 
     _snake_reset(sns);
 }
@@ -102,22 +119,35 @@ void drawSnake(snake_struct_t * sns){
                     sns->apple_color
                     );
 
+#ifdef OBSTACLES_ON
+    for(uint8_t i = 0; i < OBSTACLE_LEN; i++){
+        uint16_t temp_pixel = sns->gs->obstacle_list[i];
+        if(temp_pixel != 0xFFFF)
+            sns->gs->plot_function(
+                            sns->cookie, 
+                            GET_X(temp_pixel), 
+                            GET_Y(temp_pixel), 
+                            sns->obstacle_color
+                            );
+    }
+#endif
+
 }
 
 void _snake_reset(snake_struct_t* sns){
     /* create an initial snake of length 3 */
     memset(sns->array, 0xFFFF, MAX_LENGTH * sizeof(uint16_t));
 
-    sns->array[0]    = PACK(5, 5);
-    sns->array[1]    = PACK(5, 6);
-    sns->array[2]    = PACK(5, 7);
+    sns->array[0]    = PACK(0, 8);
+    sns->array[1]    = PACK(1, 8);
+    sns->array[2]    = PACK(2, 8);
     sns->length = 3;
 
-    sns->direction   = MOVING_UP;
+    sns->direction   = MOVING_RIGHT;
     sns->state       = LOOKING_FOR_DIRECTION;
 
     /* create a new apple */
-    _make_apple(sns);
+    make_apple(sns);
 #ifdef STATISTICS_ON
     sns->apple_count = 0;
 #endif
@@ -129,7 +159,7 @@ void _run_ai(snake_struct_t* sns){
 
     uint16_t right_weight = sns->gs->turn_weight;
 
-    uint16_t straight_weight = gs->no_turn_weight;
+    uint16_t straight_weight = sns->gs->no_turn_weight;
 
     uint16_t new_head;
     uint8_t best_move;
@@ -145,9 +175,9 @@ void _run_ai(snake_struct_t* sns){
                             current_direction, 
                             &new_direction);
 
-    straight_weight += _manhattan_dist(new_head, sns->apple_pos);
-    straight_weight += _look_ahead(sns, new_head, new_direction, NO_TURN);
-    straight_weight = straight_weight * _check_collision(sns, new_head);
+    straight_weight += _manhattan_dist(new_head, sns->apple_pos, sns->gs->manhattan_weight);
+    // straight_weight += look_ahead(sns, new_head, new_direction, NO_TURN);
+    straight_weight = straight_weight * check_collision(sns, new_head);
 
 
     /* Test Turning Right */
@@ -156,9 +186,9 @@ void _run_ai(snake_struct_t* sns){
                             current_direction, 
                             &new_direction);
 
-    right_weight += _manhattan_dist(new_head, sns->apple_pos);
-    right_weight += _look_ahead(sns, new_head, new_direction, TURN_RIGHT);
-    right_weight = right_weight * _check_collision(sns, new_head);
+    right_weight += _manhattan_dist(new_head, sns->apple_pos, sns->gs->manhattan_weight);
+    // right_weight += look_ahead(sns, new_head, new_direction, TURN_RIGHT);
+    right_weight = right_weight * check_collision(sns, new_head);
 
     /* Test Turning Left */
     new_head = _move_head(old_head, 
@@ -166,9 +196,9 @@ void _run_ai(snake_struct_t* sns){
                             current_direction, 
                             &new_direction);
 
-    left_weight += _manhattan_dist(new_head, sns->apple_pos);
-    left_weight += _look_ahead(sns, new_head, new_direction, TURN_LEFT);
-    left_weight = left_weight * _check_collision(sns, new_head);
+    left_weight += _manhattan_dist(new_head, sns->apple_pos, sns->gs->manhattan_weight);
+    // left_weight += look_ahead(sns, new_head, new_direction, TURN_LEFT);
+    left_weight = left_weight * check_collision(sns, new_head);
 
     /* Determing the move with the lowest weight */
     best_move = _lowest_weight(straight_weight,
@@ -180,11 +210,11 @@ void _run_ai(snake_struct_t* sns){
         sns->state = DEAD;
     }
     else {
-        _snake_move(sns, best_move);
+        snake_move(sns, best_move);
     }
 }
 
-void _make_apple(snake_struct_t* sns){
+void make_apple(snake_struct_t* sns){
 
     uint8_t x_max   = sns->gs->board_x - 1;
     uint8_t y_max   = sns->gs->board_y - 1;
@@ -194,19 +224,16 @@ void _make_apple(snake_struct_t* sns){
     uint8_t appleOk = 0;
     uint16_t tempApple;
 
-    /* TODO: Use _check_collision instead of this */
-    while(!appleOk){
-        appleOk = 1;
+    /* TODO: Use check_collision instead of this */
+    /* MAKE A NEW APPLE */
+    tempApple = PACK( (rand() % x_max) , (rand() % y_max));
+    while(!check_collision(sns, tempApple)){
         tempApple = PACK( (rand() % x_max) , (rand() % y_max));
-        for(uint16_t i = 0; i < length; i++){
-                if(tempApple == array[i])
-                        appleOk = 0;    //if you hit overlap run again
-        }
     }
     sns->apple_pos = tempApple;
 }
 
-uint8_t _snake_move(snake_struct_t* sns, uint8_t turning){
+uint8_t snake_move(snake_struct_t* sns, uint8_t turning){
     uint16_t new_head;
 
     uint16_t head     = sns->array[sns->length - 1];
@@ -229,7 +256,7 @@ uint8_t _snake_move(snake_struct_t* sns, uint8_t turning){
     /* Increment the length of the snake and make new apple */ 
     else{                                                              
         sns->length++;                                                
-        _make_apple(sns);  
+        make_apple(sns);  
 #ifdef STATISTICS_ON
         sns->apple_count++;
 #endif                                     
@@ -238,21 +265,29 @@ uint8_t _snake_move(snake_struct_t* sns, uint8_t turning){
 }
 
 /**
- * [_check_collision description]
+ * [check_collision description]
  * @param  point [description]
  * @return       0 if there is a collision 1 otherwise
  */
-uint8_t _check_collision(snake_struct_t* sns, uint16_t point){
+uint8_t check_collision(snake_struct_t* sns, uint16_t point){
     /* Returns 1 for a collision */
     for(uint16_t i = 0; i < (sns->length); i++){
         if(point == sns->array[i])
             return 0;
-        if( GET_X(point) > gs->board_x)
+        if( GET_X(point) > sns->gs->board_x)
             return 0; 
-        if( GET_Y(point) > gs->board_y)
+        if( GET_Y(point) > sns->gs->board_y)
             return 0; 
 
     }
+#ifdef OBSTACLES_ON
+    for(uint16_t i = 0; i < OBSTACLE_LEN; i++){
+        if(point == sns->gs->obstacle_list[i]){
+            //printf("collision with Obstacle\n");
+            return 0;
+        }
+    }
+#endif
     return 1;
 }
 
@@ -291,7 +326,10 @@ uint16_t _move_head(uint16_t head,
     return PACK(X, Y);
 }
 
-uint8_t _manhattan_dist(uint16_t current, uint16_t target ){
+uint8_t _manhattan_dist(uint16_t current, 
+                        uint16_t target, 
+                        uint8_t weight)
+{
     uint8_t distance;
     uint8_t currentX = GET_X(current);
     uint8_t currentY = GET_Y(current);
@@ -299,26 +337,32 @@ uint8_t _manhattan_dist(uint16_t current, uint16_t target ){
     uint8_t targetX  = GET_X(target);
 
     distance = (abs(currentX - targetX) + abs(currentY - targetY));
-    distance = gs->manhattan_weight * distance;
+
+    distance = weight * distance;
     return distance;
 }
 
-uint16_t _look_ahead(snake_struct_t* sns, uint16_t head, snake_directions_t dir, uint8_t turning){
+uint16_t look_ahead(snake_struct_t* sns, 
+                    uint16_t head, 
+                    snake_directions_t dir, 
+                    uint8_t turning)
+{
     uint8_t X1, Y1;     /* X1 and Y1 are above */
     uint8_t X2, Y2;     /* X2 and Y2 are bellow*/
     uint16_t temp_point1, temp_point2;
     
-    uint8_t distance     = gs->look_ahead_distance;
+    uint8_t distance     = sns->gs->look_ahead_distance;
     uint16_t clear_count = 0;
     snake_directions_t direction = _turn_direction(turning, dir);
 
     /* TODO: Optimize this code */
-    for(uint8_t i = 0; i <= distance; i++){
-        for(uint8_t j = 0; j <= (distance - i); j++){
+    for(uint8_t i = 0; i <= distance  ; i++){
+        for(int8_t j = distance - i  ; j >= 0; j--){
             X1 = GET_X(head);
             Y1 = GET_Y(head);
+
             X2 = X1;
-            Y2 = X1;
+            Y2 = Y1;
 
             /*Figure out where points should be*/
             switch(direction){
@@ -364,25 +408,36 @@ uint16_t _look_ahead(snake_struct_t* sns, uint16_t head, snake_directions_t dir,
 
             /* Check to see if there is a collision at point 1 */
             temp_point1  = PACK(X1, Y1);
-            clear_count += _check_optimal_path(sns, head, direction, temp_point1);
-            gs->print_function(NULL, "OUT of A\r\n");
+            // clear_count += check_optimal_path(sns, 
+            //                                 head, 
+            //                                 direction, 
+            //                                 temp_point1);
+            clear_count += check_collision(sns, temp_point1);
+            //sns->gs->print_function(&sns, "point_A %u %u \r\n", X1, Y1);
 
             /* Check to see if there is a collision on point 2 */
             temp_point2 = PACK(X2, Y2);
-            clear_count += _check_optimal_path(sns, head, direction, temp_point2);
-            gs->print_function(NULL, "OUT of B\r\n");
+            clear_count += check_collision(sns, temp_point2);
+            // clear_count += check_optimal_path(sns, 
+            //                                 head, 
+            //                                 direction, 
+            //                                 temp_point2);
+
+            //sns->gs->print_function(&sns, "point_B %u %u \r\n", X2, Y2);
 
         }   /* END: for(j) */
     }       /* END; for(i) */
+    // sns->gs->print_function(&sns, "clear_count %u\r\n", clear_count);
     return clear_count;
-}           /* END: _look_ahead(uint8_t turning) */
+
+}           /* END: look_ahead(uint8_t turning) */
 
 
 /* Returns gs->look_ahead_weight if the optimal path is not reachable */
-uint8_t _check_optimal_path(snake_struct_t * sns,
+uint8_t check_optimal_path(snake_struct_t * sns,
                             uint16_t head, 
                             snake_directions_t start_dir, 
-                            uint16_t apple)
+                            uint16_t target)
 {
     uint16_t straight_weight;
     uint16_t left_weight;
@@ -391,35 +446,41 @@ uint8_t _check_optimal_path(snake_struct_t * sns,
     uint8_t best_move;
     snake_directions_t temp_dir;
 
+    /* First check to see if the point is valid */
+    if(check_collision(sns, target)){
+        return sns->gs->look_ahead_weight;
+    }   
+
     /* keep running until you hit the apple */
-    while(_manhattan_dist(head, apple)){
+    while(_manhattan_dist(head, target, 1)){
 
         /* Check Straight */
         temp_head = _move_head(head, NO_TURN, start_dir, &temp_dir );
-        straight_weight = _manhattan_dist(temp_head, apple);
+        straight_weight = _manhattan_dist(temp_head, target, 1);
 
         /* Check Turn Right */
         temp_head = _move_head(head, TURN_RIGHT, start_dir, &temp_dir);
-        right_weight = _manhattan_dist(temp_head, apple);
+        right_weight = _manhattan_dist(temp_head, target, 1);
 
         /* Check Turn Left */
         temp_head = _move_head(head, TURN_LEFT, start_dir, &temp_dir);
-        left_weight = _manhattan_dist(temp_head, apple);
+        left_weight = _manhattan_dist(temp_head, target, 1);
 
         /* Process Weights and determine best direction */ 
         best_move = _lowest_weight(straight_weight,
                                 right_weight,
                                 left_weight);
 
+        /* Actually Move the head */
         head = _move_head(head, best_move,  start_dir, &start_dir);
         
         /* If there was a collision return 0 */
-        if(!_check_collision(sns, head)){
-            gs->print_function(NULL, "NO Optimal Path\r\n");
-            return gs->look_ahead_weight;
+        if(!check_collision(sns, head)){
+            // sns->gs->print_function(NULL, "NO Optimal Path\r\n");
+            return sns->gs->look_ahead_weight;
         }
     }
-    gs->print_function(NULL, "Found Optimal Path\r\n");
+    // sns->gs->print_function(NULL, "Found Optimal Path\r\n");
     return 0;
 }
 
