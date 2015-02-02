@@ -79,16 +79,20 @@ typedef int (*push_disp)(void* );
 typedef int (*print_funct)(void *, const char *, ...);
 
 typedef struct {
+
+    /* Pointers to function pointers */
     plot_point      plot_function;      /* function to plot a point */
     clear_disp      clear_function;     /* function to clear display */
     push_disp       push_function;      /* function to draw buffer */
     print_funct     print_function;     /* Function that prints message*/
-    void *          cookie;             /* this gets passed to each funct */
-    uint8_t        board_x;             /* board y dimension */
-    uint8_t        board_y;             /* board x dimension */
+
+    /* Board / Color Settings */
+    uint8_t         board_x;            /* board y dimension */
+    uint8_t         board_y;            /* board x dimension */
     uint32_t        color_depth;        /* Bits i.e. 2-Bicolor, 24-RGB */
     uint8_t         single_player;      /* PLACEHOLDER - NOT USED*/ 
 
+    /* Weights for AI / Pathfinding */
     uint8_t         manhattan_weight;
     uint8_t         turn_weight;
     uint8_t         no_turn_weight;
@@ -97,20 +101,27 @@ typedef struct {
 } game_struct_t;
 
 typedef struct {
+
+    /* Snake Info */
     uint16_t array[MAX_LENGTH+1];   /* array of coordinates of snake body */
-    snake_directions_t direction;   /* direction the snake is moving*/
     uint16_t length;                /* length of the snake */
-    uint16_t apple_pos;             /* masked x,y coordinates of apple */
-    uint32_t apple_color;
-    uint32_t snake_color;
     snake_states_t state;           /* State, can be written and read*/
-#ifdef STATISTICS_ON
-    uint32_t    apple_count;   
-#endif 
+    snake_directions_t direction;   /* direction the snake is moving*/
+    
+    /* Apple / Color Info */
+    uint16_t apple_pos;             /* masked x,y coordinates of apple */
+    uint32_t apple_count;           /* Number of apples the snake caught */
+    uint32_t apple_color;           /* Color of the apple, passed to plot*/
+    uint32_t snake_color;           /* color of the snake, passed to plot */
+
+    /* Cookie and pointer go game_struct_t */
+    void *          cookie;     /* this gets passed to each funct */
+    game_struct_t*  gs;         /* Pointer back to the snake's game_struct_t*/
+    
 } snake_struct_t;
 
-void snakeInit( game_struct_t* gameStruct, snake_struct_t* snakeStruct );
-void drawSnake();
-void runFrame();
+void snakeInit( game_struct_t* gs, snake_struct_t* sns );
+void drawSnake(snake_struct_t * sns);
+void runFrame(snake_struct_t * sns);
 
 #endif

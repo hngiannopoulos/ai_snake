@@ -39,11 +39,11 @@ int main(){
     gameStruct.plot_function  = ht1632c_plot;
     gameStruct.clear_function = ht1632c_clear;
     gameStruct.push_function  = ht1632c_push;
-    gameStruct.cookie         = NULL;
     gameStruct.board_x        = 31;
     gameStruct.board_y        = 15;
     gameStruct.color_depth    = 2;
     
+    snakeStruct.cookie         = NULL;
     gameStruct.manhattan_weight    = 1;
     gameStruct.turn_weight         = 1;
     gameStruct.no_turn_weight      = 1;
@@ -78,7 +78,7 @@ int main(){
 
                         /* Try the parameters RUN_MAX Times */
                         for(uint32_t frame = 0; frame < RUN_MAX; frame++){
-                            runFrame();
+                            runFrame(&snakeStruct);
                             if(snakeStruct.state == WON){
                                 win_count++;
                                 apple_count += snakeStruct.apple_count;
