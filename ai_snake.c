@@ -121,7 +121,7 @@ void drawSnake(snake_struct_t * sns){
 
 #ifdef OBSTACLES_ON
     for(uint8_t i = 0; i < OBSTACLE_LEN; i++){
-        uint16_t temp_pixel = sns->gs->obstacle_list[i];
+        temp_pixel = sns->gs->obstacle_list[i];
         if(temp_pixel != 0xFFFF)
             sns->gs->plot_function(
                             sns->cookie, 
